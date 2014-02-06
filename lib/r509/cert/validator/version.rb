@@ -1,6 +1,6 @@
 module R509
-  module Cert
-    module Validator
+  class Cert
+    class Validator
       VERSION = "0.0.1"
     end
   end
