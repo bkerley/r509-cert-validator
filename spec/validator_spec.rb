@@ -18,7 +18,8 @@ describe R509::Cert::Validator do
 
   describe 'with a cert with CRL and OCSP data' do
     let(:github_cert){ R509::Cert.new cert: load_cert('github.crt') }
-    subject{ described_class.new github_cert }
+    let(:issuer_cert){ R509::Cert.new cert: load_cert('digicert_ev.crt') }
+    subject{ described_class.new github_cert, issuer_cert }
 
     it 'should validate a cert against a CRL' do
       expect{ subject.validate crl: true, ocsp: false }.to_not raise_error
