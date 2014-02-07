@@ -99,7 +99,23 @@ module R509
       end
 
       def validate_crl
-        
+        crl_uri = @cert.cdp.uris.first
+        resp = Net::HTTP.get_response URI(crl_uri)
+
+        if resp.code != '200'
+          raise Error.new("Unexpected HTTP #{resp.code} from CRL endpoint")
+        end
+
+        parsed_crl = R509::CRL::SignedList.new resp.body
+        unless parsed_crl.verify @cert.public_key
+          raise CrlError.new "CRL did not match certificate"
+        end
+
+        if parsed_crl.revoked? @cert.serial
+          raise CrlError.new "CRL listed certificate as revoked"
+        end
+
+        return true
       end
 
       def ocsp_available?
