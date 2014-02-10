@@ -1,9 +1,9 @@
 ---
 certificate_authorities:
-  r509_howto_ca:
+  rcv_spec_ca:
     ca_cert:
-      cert: root.crt
-      key: root.key
+      cert: <%= cert_path %>/root.crt
+      key: <%= cert_path %>/root.key
     ocsp_start_skew_seconds: 3600
     ocsp_validity_hours: 168
     crl_list_file: rcv_spec_list.txt
@@ -11,7 +11,7 @@ certificate_authorities:
     crl_validity_hours: 87600
     crl_md: SHA1
     profiles:
-      server:
+      good:
         basic_constraints:
           :ca: false
         authority_info_access:
