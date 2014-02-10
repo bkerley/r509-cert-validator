@@ -6,14 +6,12 @@ certificate_authorities:
       key: <%= cert_path %>/root.key
     ocsp_start_skew_seconds: 3600
     ocsp_validity_hours: 168
-    crl_list_file: rcv_spec_list.txt
-    crl_number_file: rcv_spec_crlnumber.txt
+    crl_list_file: <%= cert_path %>/rcv_spec_list.txt
+    crl_number_file: <%= cert_path %>/rcv_spec_crlnumber.txt
     crl_validity_hours: 87600
     crl_md: SHA1
     profiles:
       good:
-        basic_constraints:
-          :ca: false
         authority_info_access:
           :ocsp_location:
           -  :type: URI
@@ -22,30 +20,15 @@ certificate_authorities:
           :value:
           -  :type: URI
              :value: http://localhost:22022/crl
-        key_usage:
+      crl_only:
+        crl_distribution_points:
           :value:
-          - digitalSignature
-          - keyEncipherment
-        extended_key_usage:
-          :value:
-          - serverAuth
-        default_md: SHA1
-        allowed_mds:
-        - SHA256
-        - SHA512
-        - SHA1
-        subject_item_policy:
-          CN:
-            :policy: required
-          O:
-            :policy: required
-          OU:
-            :policy: optional
-          ST:
-            :policy: required
-          C:
-            :policy: required
-          L:
-            :policy: required
+          -  :type: URI
+             :value: http://localhost:22022/crl
+      ocsp_only:
+        authority_info_access:
+          :ocsp_location:
+          -  :type: URI
+             :value: http://localhost:22022/ocsp
 certwriter:
   path: <%= cert_path %>

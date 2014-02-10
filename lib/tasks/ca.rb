@@ -53,18 +53,52 @@ namespace :ca do
   file 'spec/support/ca/good.crt' => :good
 
   desc 'Generate a valid certificate with only CRL data'
-  task :crl_only => [:root, 'spec/support/ca/config.yaml']
+  task :crl_only => [:root, 'spec/support/ca/config.yaml'] do |t|
+    ca = CaHelper.ca
+    csr = CaHelper.options_builder.build_and_enforce(
+                                                     csr: CaHelper.csr,
+                                                     profile_name: 'crl_only'
+                                                     )
+    cert = ca.sign csr
+    cert.write_pem 'spec/support/ca/crl_only.crt'
+  end
   file 'spec/support/ca/crl_only.crt' => :crl_only
 
   desc 'Generate a valid certificate with only OCSP data'
-  task :ocsp_only => [:root, 'spec/support/ca/config.yaml']
+  task :ocsp_only => [:root, 'spec/support/ca/config.yaml'] do |t|
+    ca = CaHelper.ca
+    csr = CaHelper.options_builder.build_and_enforce(
+                                                     csr: CaHelper.csr,
+                                                     profile_name: 'ocsp_only'
+                                                     )
+    cert = ca.sign csr
+    cert.write_pem 'spec/support/ca/crl_only.crt'
+  end
   file 'spec/support/ca/ocsp_only.crt' => :ocsp_only
 
   desc 'Generate a certificate and revoke it in both CRL and OCSP'
-  task :revoked => [:root, 'spec/support/ca/config.yaml']
+  task :revoked => [:root, 'spec/support/ca/config.yaml'] do |t|
+    ca = CaHelper.ca
+    csr = CaHelper.options_builder.build_and_enforce(
+                                                     csr: CaHelper.csr,
+                                                     profile_name: 'good'
+                                                     )
+
+    cert = ca.sign csr
+    cert.write_pem 'spec/support/ca/revoked.crt'
+
+    admin = R509::CRL::Administrator.new CaHelper.pool['rcv_spec_ca']
+    admin.revoke_cert cert.serial
+    crl = admin.generate_crl
+    crl.write_pem 'spec/support/ca/rcv_spec.crl'
+  end
   file 'spec/support/ca/revoked.crt' => :revoked
 
   desc 'Generate a valid certificate with no CRL or OCSP data'
-  task :empty => [:root, 'spec/support/ca/config.yaml']
+  task :empty => [:root, 'spec/support/ca/config.yaml'] do
+    ca = CaHelper.ca
+    cert = ca.sign csr: CaHelper.csr
+    cert.write_pem 'spec/support/ca/empty.crt'
+  end
   file 'spec/support/ca/empty.crt' => :empty
 end
