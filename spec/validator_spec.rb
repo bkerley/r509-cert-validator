@@ -3,7 +3,7 @@ require 'spec_helper'
 describe R509::Cert::Validator do
 
   describe 'with a cert without CRL or OCSP data' do
-    let(:no_validator_cert){ R509::Cert.new cert: load_cert('no_validator.crt') }
+    let(:no_validator_cert){ R509::Cert.new cert: load_cert('empty.crt') }
     subject{ described_class.new no_validator_cert }
 
     it 'should validate' do
@@ -17,8 +17,8 @@ describe R509::Cert::Validator do
   end
 
   describe 'with a cert with CRL and OCSP data' do
-    let(:github_cert){ R509::Cert.new cert: load_cert('github.crt') }
-    let(:issuer_cert){ R509::Cert.new cert: load_cert('digicert_ev.crt') }
+    let(:github_cert){ R509::Cert.new cert: load_cert('good.crt') }
+    let(:issuer_cert){ R509::Cert.new cert: load_cert('root.crt') }
     subject{ described_class.new github_cert, issuer_cert }
 
     it 'should validate a cert against a CRL' do
