@@ -65,7 +65,7 @@ module R509
           end
           
           validity_range = (basic[4]..basic[5])
-          unless validity_range.include? current
+          unless validity_range.cover? Time.now
             raise OcspError.new "OCSP response outside validity window"
           end
         end
