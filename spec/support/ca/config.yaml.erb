@@ -1,0 +1,34 @@
+---
+certificate_authorities:
+  rcv_spec_ca:
+    ca_cert:
+      cert: <%= cert_path %>/root.crt
+      key: <%= cert_path %>/root.key
+    ocsp_start_skew_seconds: 3600
+    ocsp_validity_hours: 168
+    crl_list_file: <%= cert_path %>/rcv_spec_list.txt
+    crl_number_file: <%= cert_path %>/rcv_spec_crlnumber.txt
+    crl_validity_hours: 87600
+    crl_md: SHA1
+    profiles:
+      good:
+        authority_info_access:
+          :ocsp_location:
+          -  :type: URI
+             :value: http://localhost:22022/ocsp
+        crl_distribution_points:
+          :value:
+          -  :type: URI
+             :value: http://localhost:22022/crl
+      crl_only:
+        crl_distribution_points:
+          :value:
+          -  :type: URI
+             :value: http://localhost:22022/crl
+      ocsp_only:
+        authority_info_access:
+          :ocsp_location:
+          -  :type: URI
+             :value: http://localhost:22022/ocsp
+certwriter:
+  path: <%= cert_path %>
