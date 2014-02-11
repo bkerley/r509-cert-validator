@@ -15,7 +15,7 @@ module R509
 
           body = R509::CRL::SignedList.new(get(uris.first))
 
-          unless body.verify @cert.public_key
+          unless body.verify @issuer.public_key
             raise CrlError.new "CRL did not match certificate"
           end
 
