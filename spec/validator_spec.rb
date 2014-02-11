@@ -61,11 +61,11 @@ describe R509::Cert::Validator do
     subject{ described_class.new revoked_cert, issuer_cert }
 
     it 'should validate false against a CRL' do
-      expect{ subject.validate crl: true, ocsp: false }.to_not be
+      expect(subject.validate crl: true, ocsp: false).to_not be
     end
 
     it 'should validate false against OCSP' do
-      expect{ subject.validate crl: false, ocsp: true }.to_not be
+      expect(subject.validate crl: false, ocsp: true).to_not be
     end
   end
 end
