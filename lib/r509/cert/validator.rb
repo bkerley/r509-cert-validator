@@ -1,8 +1,7 @@
 require 'r509'
-require "r509/cert/validator/version"
-require 'r509/cert/validator/errors'
-require 'net/http'
-require 'base64'
+%w{version errors basic_validator ocsp_validator crl_validator}.each do |f|
+  require "r509/cert/validator/#{f}"
+end
 
 module R509
   class Cert
@@ -21,21 +20,23 @@ module R509
 
         @cert = cert
         @issuer = issuer
+
+        initialize_validators
       end
 
       def validate!(options={})
-        opts = { ocsp: ocsp_available?, crl: crl_available? }.merge options
+        opts = { ocsp: @ocsp.available?, crl: @crl.available? }.merge options
 
-        if opts[:ocsp] && !ocsp_available?
+        if opts[:ocsp] && !@ocsp.available?
           raise Error.new "Tried to validate OCSP but cert has no OCSP data" 
         end
 
-        if opts[:crl] && !crl_available?
-          raise Error.new "Tried to validate CRL but cert has no CRL data"
+        if opts[:crl] && !@crl.available?
+          
         end
 
-        validate_ocsp if opts[:ocsp]
-        validate_crl if opts[:crl]
+        @ocsp.validate! if opts[:ocsp]
+        @crl.validate! if opts[:crl]
         true
       end
 
@@ -52,84 +53,9 @@ module R509
       end
 
       private
-      def validate_ocsp
-        ocsp_uri = @cert.authority_info_access.ocsp.uris.first
-        cert_id = OpenSSL::OCSP::CertificateId.new @cert.cert, @issuer.cert
-        req = OpenSSL::OCSP::Request.new
-        req.add_nonce
-        req.add_certid cert_id
-        req_pem = Base64.urlsafe_encode64(req.to_der).strip
-        req_uri = URI(ocsp_uri+'/'+URI.encode_www_form_component(req_pem))
-
-        resp = Net::HTTP.get_response(req_uri)
-        if resp.code != '200'
-          raise Error.new("Unexpected HTTP #{resp.code} from OCSP endpoint")
-        end
-
-        body = R509::OCSP::Response.parse resp.body
-
-        if body.status != 0
-          raise OcspError.new "OCSP status was #{body.status}, expected 0"
-        end
-
-        basic = body.basic[0]
-
-        if basic[0].serial != @cert.serial
-          raise OcspError.new "OCSP cert serial was #{basic[0].serial}, expected #{@cert.serial}"
-        end
-
-        if basic[1] == 1
-          raise OcspError.new "OCSP response indicates cert was revoked"
-        end
-
-        if basic[1] != 0
-          raise OcspError.new "OCSP response was #{basic[1]}, expected 0"
-        end
-
-        validity_range = (basic[4]..basic[5])
-        unless validity_range.include? current
-          raise OcspError.new "OCSP response outside validity window"
-        end
-
-        if body.check_nonce req != R509::OCSP::Request::Nonce::PRESENT_AND_EQUAL
-          raise OcspError.new "OCSP Nonce was not present and equal to request"
-        end
-
-        return true
-      end
-
-      def validate_crl
-        crl_uri = @cert.cdp.uris.first
-        resp = Net::HTTP.get_response URI(crl_uri)
-
-        if resp.code != '200'
-          raise Error.new("Unexpected HTTP #{resp.code} from CRL endpoint")
-        end
-
-        parsed_crl = R509::CRL::SignedList.new resp.body
-        unless parsed_crl.verify @cert.public_key
-          raise CrlError.new "CRL did not match certificate"
-        end
-
-        if parsed_crl.revoked? @cert.serial
-          raise CrlError.new "CRL listed certificate as revoked"
-        end
-
-        return true
-      end
-
-      def ocsp_available?
-        return false unless @issuer
-        return false unless aia = @cert.authority_info_access
-        return false unless aia.ocsp
-        return false if aia.ocsp.uris.empty?
-        return true
-      end
-
-      def crl_available?
-        return false unless cdp = @cert.crl_distribution_points
-        return false if cdp.uris.empty?
-        return true
+      def initialize_validators
+        @ocsp = OcspValidator.new @cert, @issuer
+        @crl = CrlValidator.new @cert, @issuer
       end
     end
   end
