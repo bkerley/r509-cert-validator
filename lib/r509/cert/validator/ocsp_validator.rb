@@ -20,7 +20,7 @@ module R509
           body = R509::OCSP::Response.parse(get(uri))
           
           check_ocsp_response body
-          check_ocsp_payload body.basic
+          check_ocsp_payload body.basic.status.first
           return true
         end
 
@@ -42,10 +42,10 @@ module R509
             raise OcspError.new "OCSP response did not match issuer"
           end
 
-          unless body.basic
+          unless body.basic.status.first
             raise OcspError.new "OCSP response was missing payload"
           end
-          
+
           if body.check_nonce(@req) != R509::OCSP::Request::Nonce::PRESENT_AND_EQUAL
             raise OcspError.new "OCSP Nonce was not present and equal to request"
           end
