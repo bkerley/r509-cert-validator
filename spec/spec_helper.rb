@@ -5,3 +5,7 @@ def load_cert(name)
   data = File.read path
   return OpenSSL::X509::Certificate.new data
 end
+
+def cert(name)
+  R509::Cert.new cert: load_cert(name)
+end

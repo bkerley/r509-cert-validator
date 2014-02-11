@@ -72,7 +72,7 @@ namespace :ca do
                                                      profile_name: 'ocsp_only'
                                                      )
     cert = ca.sign csr
-    cert.write_pem 'spec/support/ca/crl_only.crt'
+    cert.write_pem 'spec/support/ca/ocsp_only.crt'
   end
   file 'spec/support/ca/ocsp_only.crt' => :ocsp_only
 
