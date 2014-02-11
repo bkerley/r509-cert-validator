@@ -4,11 +4,6 @@ module R509
   class Cert
     class Validator
       class OcspValidator < BasicValidator
-        def initializer(cert, issuer)
-          @cert = cert
-          @issuer = issuer
-        end
-
         def available?
           return false unless @issuer
           return false unless aia && aia.ocsp
@@ -17,7 +12,7 @@ module R509
         end
 
         def validate!
-          unless applicable?
+          unless available?
             raise Error.new "Tried to validate OCSP but cert has no OCSP data"
           end
           
@@ -25,16 +20,16 @@ module R509
           body = R509::OCSP::Response.parse(get(uri))
           
           check_ocsp_response body
-          check_ocsp_payload body.basic[0]
+          check_ocsp_payload body.basic
           return true
         end
 
         private
         def build_request_uri
-          req = OpenSSL::OCSP::Request.new
-          req.add_nonce
-          req.add_certid cert_id
-          pem = Base64.encode64(req.to_der).strip
+          @req = OpenSSL::OCSP::Request.new
+          @req.add_nonce
+          @req.add_certid cert_id
+          pem = Base64.encode64(@req.to_der).strip
           URI(ocsp_uris.first + '/' + URI.encode_www_form_component(pem))
         end
         
@@ -43,8 +38,16 @@ module R509
             raise OcspError.new "OCSP status was #{body.status}, expected 0"
           end
 
-          unless body.basic.first
+          unless body.verify(@issuer.cert)
+            raise OcspError.new "OCSP response did not match issuer"
+          end
+
+          unless body.basic
             raise OcspError.new "OCSP response was missing payload"
+          end
+          
+          if body.check_nonce(@req) != R509::OCSP::Request::Nonce::PRESENT_AND_EQUAL
+            raise OcspError.new "OCSP Nonce was not present and equal to request"
           end
         end
 
@@ -64,10 +67,6 @@ module R509
           validity_range = (basic[4]..basic[5])
           unless validity_range.include? current
             raise OcspError.new "OCSP response outside validity window"
-          end
-          
-          if body.check_nonce req != R509::OCSP::Request::Nonce::PRESENT_AND_EQUAL
-            raise OcspError.new "OCSP Nonce was not present and equal to request"
           end
         end
 

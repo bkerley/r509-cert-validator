@@ -4,14 +4,14 @@ module R509
   class Cert
     class Validator
       class BasicValidator
-        def initializer(cert, issuer)
+        def initialize(cert, issuer)
           @cert = cert
           @issuer = issuer
         end
 
         private
-        def get(url)
-          resp = Net::HTTP.get_response uri
+        def get(uri)
+          resp = Net::HTTP.get_response URI(uri)
           if resp.code != '200'
             raise Error.new("Unexpected HTTP #{resp.code} from OCSP endpoint")
           end
