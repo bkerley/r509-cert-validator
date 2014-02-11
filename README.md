@@ -5,6 +5,9 @@ Certificate Status Protocol (OCSP) or Certificate Revocation List (CRL)
 endpoint? This gem uses the `r509` library for x.509 processing, and performs
 OCSP and CRL processing.
 
+[![Build Status](https://travis-ci.org/bkerley/r509-cert-validator.png?branch=master)](https://travis-ci.org/bkerley/r509-cert-validator)
+[![Code Climate](https://codeclimate.com/github/bkerley/r509-cert-validator.png)](https://codeclimate.com/github/bkerley/r509-cert-validator)
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -42,6 +45,21 @@ validator.validate! crl: false
 # R509::Cert::Validator::Error
 validator.validate ocsp: true
 ```
+
+## Development and Testing
+
+This library requires a bit of Public Key Infrastructure (PKI) for testing.
+Fortunately, it's easy to set up.
+
+0. Install dependencies with `bundle install`.
+0. Optional: clean out the existing PKI with `rake ca:clean`
+1. Generate a CA and testing certificates with `rake ca:all`
+2. Start the CRL and OCSP endpoint with `bundle exec ruby spec/support/ca_server.rb`
+   and let it run. This command starts a web server on port 22022.
+3. Run the specs with `bundle exec rspec`
+4. CTRL-C or otherwise kill the CRL and OCSP server when you no longer need it.
+
+This process is automated by `travis.sh`, and you can just run that :)
 
 ## Contributing
 
