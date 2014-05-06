@@ -2,6 +2,9 @@ require 'spec_helper'
 
 describe R509::Cert::Validator do
   let(:issuer_cert){ cert('root.crt') }
+  let(:crl_path) do
+    File.expand_path(File.join(__dir__, 'support/ca/rcv_spec.crl')) 
+  end
 
   describe 'with a cert without CRL or OCSP data' do
     let(:no_validator_cert){ cert('empty.crt') }
@@ -14,6 +17,12 @@ describe R509::Cert::Validator do
     it 'should refuse to validate with CRL or OCSP' do
       expect{ subject.validate crl: true }.to raise_error
       expect{ subject.validate ocsp: true }.to raise_error
+    end
+
+    it 'should validate against a CRL file' do
+      expect do
+        subject.validate crl: true, ocsp: false, crl_file: crl_path 
+      end.to_not raise_error
     end
   end
 
@@ -68,6 +77,13 @@ describe R509::Cert::Validator do
     it 'should validate false against OCSP' do
       expect(subject.validate crl: false, ocsp: true).to_not be
       expect{ subject.validate! crl: false, ocsp: true }.to raise_error /revoked/
+    end
+
+    it 'should validate false against a CRL file' do
+      expect(subject.validate crl: true, ocsp: false, crl_file: crl_path).
+        to_not be
+      expect{ subject.validate! crl: true, ocsp: false, crl_file: crl_path}.
+        to raise_error /revoked/
     end
   end
 end
