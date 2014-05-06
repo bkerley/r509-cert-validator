@@ -8,15 +8,23 @@ module R509
           return true
         end
 
-        def validate!
-          unless available?
+        def validate!(crl_file = nil)
+          if !available? && crl_file.nil?
             raise Error.new "Tried to validate CRL but cert has no CRL data"
           end
 
-          body = R509::CRL::SignedList.new(get(uris.first))
+          crl = unless crl_file.nil?
+                  File.read crl_file
+                else
+                  get(uris.first)
+                end
 
-          unless body.verify @issuer.public_key
-            raise CrlError.new "CRL did not match certificate"
+          body = R509::CRL::SignedList.new(crl)
+
+          if @issuer
+            unless body.verify @issuer.public_key
+              raise CrlError.new "CRL did not match certificate"
+            end
           end
 
           if body.revoked? @cert.serial
