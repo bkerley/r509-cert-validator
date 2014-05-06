@@ -9,13 +9,13 @@ module R509
       # The certificate this Validator will validate
       attr_reader :cert
 
-      def initialize(cert, issuer = nil)
+      def initialize(cert, issuer = nil, options = {})
         if cert.is_a? OpenSSL::X509::Certificate
           cert = R509::Cert.new cert: cert
         end
         
         if issuer.is_a? OpenSSL::X509::Certificate
-          cert = R509::Cert.new cert: cert
+          issuer = R509::Cert.new cert: issuer
         end
 
         @cert = cert
@@ -31,12 +31,16 @@ module R509
           raise Error.new "Tried to validate OCSP but cert has no OCSP data" 
         end
 
-        if opts[:crl] && !@crl.available?
-          
+        crl_file = opts[:crl_file]
+
+        crl_available = @crl.available? || (crl_file && File.exist?(crl_file))
+
+        if opts[:crl] && !crl_available
+          raise Error.new "Tried to validate CRL but cert has no CRL data"
         end
 
         @ocsp.validate! if opts[:ocsp]
-        @crl.validate! if opts[:crl]
+        @crl.validate!(crl_file) if opts[:crl]
         true
       end
 
