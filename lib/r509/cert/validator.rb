@@ -15,7 +15,7 @@ module R509
         end
         
         if issuer.is_a? OpenSSL::X509::Certificate
-          cert = R509::Cert.new cert: cert
+          issuer = R509::Cert.new cert: issuer
         end
 
         @cert = cert
