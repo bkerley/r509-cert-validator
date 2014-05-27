@@ -4,7 +4,7 @@ require_relative 'helper'
 
 namespace :ca do
   desc 'Generate all the certificates for testing'
-  task :all => %i{ good ocsp_only crl_only empty revoked }
+  task :all => %w{ good ocsp_only crl_only empty revoked }
 
   task :clean do
     Dir.chdir 'spec/support/ca' do
