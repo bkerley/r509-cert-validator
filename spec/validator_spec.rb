@@ -3,6 +3,7 @@ require 'spec_helper'
 describe R509::Cert::Validator do
   let(:issuer_cert){ cert('root.crt') }
   let(:crl_path) do
+    __dir__ ||= File.dirname(File.expand_path(__FILE__))
     File.expand_path(File.join(__dir__, 'support/ca/rcv_spec.crl')) 
   end
 
